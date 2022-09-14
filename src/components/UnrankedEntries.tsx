@@ -12,6 +12,7 @@ export const UnrankedEntries = () => {
 
 	const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
 		const { files } = e.currentTarget;
+		console.log("files uploaded:\n", files);
 		const filesWithID = [...files!].map((file) => {
 			const src = URL.createObjectURL(file);
 			return [nanoid(), src, undefined] as EntryType;
@@ -32,7 +33,6 @@ export const UnrankedEntries = () => {
 					checked={allowDuplicates}
 					onChange={(e) => setAllowDuplicates(e.target.checked)}
 					type="checkbox"
-					name=""
 				/>
 				Allow duplicates
 			</label>

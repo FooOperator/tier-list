@@ -3,13 +3,47 @@ import { entryStore, EntryType } from "../store";
 import { useStore } from "zustand";
 import { Entry } from "./Entry";
 import { flatColors } from "../App";
-import { nanoid } from "nanoid";
+import { Modal, useModal } from "./Modal";
 
 export type TierData = { name: string; color: string };
 
 type TierProps = {
 	entries: EntryType[];
 	tier: TierData;
+};
+
+export const RenameTierModal = () => {
+	const renameModalProps = useModal();
+	const [newTierName, setNewTierName] = useState<string>("");
+
+	const handleSubmit = (e: FormEvent) => {
+		e.preventDefault();
+		renameModalProps.close();
+	};
+
+	return (
+		<>
+			<Modal modalProps={renameModalProps}>
+				<input
+					className="w-full text-lg my-auto indent-4 rounded-md"
+					placeholder="Old Tier Name"
+					value={newTierName}
+					onChange={(e) => setNewTierName(e.target.value)}
+					form="rename-form"
+					type="text"
+				/>
+				<button
+					form="rename-form"
+					className="rounded-md p-1 ml-auto text-slate-50 bg-blue-600 mt-3">
+					Change
+				</button>
+				<form
+					onSubmit={handleSubmit}
+					id="rename-form"
+					action=""></form>
+			</Modal>
+		</>
+	);
 };
 
 export const Tier = ({ entries, tier }: TierProps) => {
@@ -54,7 +88,7 @@ export const Tier = ({ entries, tier }: TierProps) => {
 			onDrop={(e) => {
 				console.log("drop");
 				const id = e.dataTransfer.getData("id");
-				changeEntryTier(id, tier.name	);
+				changeEntryTier(id, tier.name);
 			}}
 			onDragOver={(e) => {
 				e.preventDefault();
@@ -101,6 +135,7 @@ export const TierList = () => {
 
 	return (
 		<>
+			<RenameTierModal />
 			<div className="relative stack w-2/4">
 				<div className="flex justify-around w-full p-3">
 					<input

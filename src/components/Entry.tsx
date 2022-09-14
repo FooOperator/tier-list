@@ -1,4 +1,3 @@
-import { useContext } from "react";
 import { EntryType } from "../store";
 
 export const Entry = ({

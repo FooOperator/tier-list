@@ -1,6 +1,6 @@
 import colors from "tailwindcss/colors";
 import { createContext, ReactNode, useEffect, useState } from "react";
-import { ContextMenuDict } from "./components/ContextMenu";
+import { ContextMenuDict } from "./components/ContextMenu/ContextMenu";
 import create from "zustand";
 import { TierData } from "./components/Tier";
 import { nanoid } from "nanoid";
