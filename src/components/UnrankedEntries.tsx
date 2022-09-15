@@ -1,27 +1,35 @@
-import { nanoid } from "nanoid";
-import { ChangeEvent, useContext, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { useStore } from "zustand";
-import { entryStore } from "../store";
-import type { EntryType } from "../store";
-
+import { entryStore } from "../store/EntryStore";
+import { EntryType } from "../store/EntryStore";
+import { SolidButton } from "./Button";
 import { Entry } from "./Entry";
 
 export const UnrankedEntries = () => {
 	const { addEntry, entries } = useStore(entryStore);
 	const [allowDuplicates, setAllowDuplicates] = useState<boolean>();
+	const fileUploadRef = useRef<HTMLInputElement>(null);
+
+	const triggerFileUpload = () => fileUploadRef.current?.click();
 
 	const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
 		const { files } = e.currentTarget;
 		console.log("files uploaded:\n", files);
 		const filesWithID = [...files!].map((file) => {
 			const src = URL.createObjectURL(file);
-			return [nanoid(), src, undefined] as EntryType;
+			return { src } as EntryType;
 		});
 		addEntry(filesWithID);
 	};
 
+	const handleOnDrop = (e: React.DragEvent) => {
+		console.log("dataTransfer items: \n", e.dataTransfer.items);
+	};
+
 	return (
-		<div className="stack-center">
+		<div
+			onDrop={(e) => handleOnDrop(e)}
+			className="w-2/4 stack-center gap-3">
 			<label
 				className={`${
 					allowDuplicates ? "bg-blue-400" : ""
@@ -36,23 +44,33 @@ export const UnrankedEntries = () => {
 				/>
 				Allow duplicates
 			</label>
-			<p className="text-lg">
-				Drop images or{" "}
+			<div className="text-xl bg-slate-200 px-5 py-10 w-3/4 stack-center rounded-lg">
+				<p>
+					Drop images or{" "}
+					<SolidButton onClick={triggerFileUpload}>
+						browse
+					</SolidButton>{" "}
+				</p>
 				<input
 					type="file"
 					multiple
 					accept="image/png, image/jpeg"
+					ref={fileUploadRef}
 					onChange={handleFileUpload}
-					className="rounded-md border-2 p-2 border-slate-900 text-slate-900 bg-blue-700"
+					className="hidden"
 				/>
-			</p>
-			<div className="mt-2 grid grid-cols-4 gap-y-1 h-96 overflow-y-auto">
+			</div>
+			<ul className="mt-2 border-2 grid grid-cols-tier gap-y-1 h-96 overflow-y-auto">
 				{entries.map((entry, index) => {
-					if (!entry[2]) {
-						return <Entry key={entry[0]} entry={entry} />;
+					if (!entry.tierName) {
+						return (
+							<li className="" key={entry.id}>
+								<Entry entry={entry} />
+							</li>
+						);
 					}
 				})}
-			</div>
+			</ul>
 		</div>
 	);
 };
