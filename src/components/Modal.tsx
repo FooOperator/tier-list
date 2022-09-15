@@ -10,8 +10,10 @@ import React, {
 } from "react";
 import useModalsStore, { ModalKey } from "../store/ModalsStore";
 
-const safeDocument = typeof document !== "undefined" ? document : {};
+const safeDocument: Document | {} =
+	typeof document !== "undefined" ? document : {};
 
+// TODO: Fix issues to remove @ts-ignore
 /**
  * Credits to {@link https://gist.github.com/reecelucas @reecelucas} for this hook.
  *
@@ -22,12 +24,16 @@ const safeDocument = typeof document !== "undefined" ? document : {};
  */
 const useScrollBlock = () => {
 	const scrollBlocked = useRef();
-	const html = safeDocument.documentElement;
+
+	// @ts-ignore
+	const html = safeDocument.documentElement as Document;
+
+	// @ts-ignore
 	const { body } = safeDocument;
 
 	const blockScroll = () => {
 		if (!body || !body.style || scrollBlocked.current) return;
-
+		// @ts-ignore
 		const scrollBarWidth = window.innerWidth - html.clientWidth;
 		const bodyPaddingRight =
 			parseInt(
@@ -35,25 +41,27 @@ const useScrollBlock = () => {
 					.getComputedStyle(body)
 					.getPropertyValue("padding-right")
 			) || 0;
-
+		// @ts-ignore
 		html.style.position = "relative"; /* [1] */
+		// @ts-ignore
 		html.style.overflow = "hidden"; /* [2] */
 		body.style.position = "relative"; /* [1] */
 		body.style.overflow = "hidden"; /* [2] */
 		body.style.paddingRight = `${bodyPaddingRight + scrollBarWidth}px`;
-
+		// @ts-ignore
 		scrollBlocked.current = true;
 	};
 
 	const allowScroll = () => {
 		if (!body || !body.style || !scrollBlocked.current) return;
-
+		// @ts-ignore
 		html.style.position = "";
+		// @ts-ignore
 		html.style.overflow = "";
 		body.style.position = "";
 		body.style.overflow = "";
 		body.style.paddingRight = "";
-
+		// @ts-ignore
 		scrollBlocked.current = false;
 	};
 
