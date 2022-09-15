@@ -1,36 +1,49 @@
-import { FormEvent, useContext, useState } from "react";
-import { entryStore, EntryType } from "../store";
-import { useStore } from "zustand";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import useEntryStore, { EntryType } from "../store/EntryStore";
 import { Entry } from "./Entry";
-import { flatColors } from "../App";
 import { Modal, useModal } from "./Modal";
+import { ColorSelect } from "./ColorSelect";
+import { SubmitButton } from "./Button";
+import { applyDatasetToRefs } from "../utils/helpers";
 
 export type TierData = { name: string; color: string };
 
-type TierProps = {
-	entries: EntryType[];
-	tier: TierData;
-};
-
-export const RenameTierModal = () => {
-	const renameModalProps = useModal();
-	const [newTierName, setNewTierName] = useState<string>("");
+export const EditTierModal = () => {
+	const modalProps = useModal("edit tier");
+	const [newTierData, setNewTierData] = useState<TierData>({
+		name: "",
+		color: "",
+	});
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();
-		renameModalProps.close();
+		modalProps.close();
 	};
 
 	return (
 		<>
-			<Modal modalProps={renameModalProps}>
+			<Modal modalProps={modalProps}>
 				<input
 					className="w-full text-lg my-auto indent-4 rounded-md"
 					placeholder="Old Tier Name"
-					value={newTierName}
-					onChange={(e) => setNewTierName(e.target.value)}
+					value={newTierData.name}
+					onChange={(e) =>
+						setNewTierData((prev) => ({
+							...prev,
+							name: e.target.value,
+						}))
+					}
 					form="rename-form"
 					type="text"
+				/>
+				<ColorSelect
+					color={newTierData.color}
+					setColor={(e) =>
+						setNewTierData((prev) => ({
+							...prev,
+							color: e.target.value,
+						}))
+					}
 				/>
 				<button
 					form="rename-form"
@@ -46,20 +59,101 @@ export const RenameTierModal = () => {
 	);
 };
 
-export const Tier = ({ entries, tier }: TierProps) => {
+export const ChangeTierModal = () => {
+	const modalProps = useModal("move to tier");
+	const { getTiers } = useEntryStore();
+	const [newTierData, setNewTierData] = useState<TierData>({
+		name: "",
+		color: "",
+	});
+
+	const handleSubmit = (e: FormEvent) => {
+		e.preventDefault();
+		modalProps.close();
+	};
+
+	return (
+		<>
+			<Modal modalProps={modalProps}>
+				<input
+					className="w-full text-lg my-auto indent-4 rounded-md"
+					placeholder="Old Tier Name"
+					value={newTierData.name}
+					onChange={(e) =>
+						setNewTierData((prev) => ({
+							...prev,
+							name: e.target.value,
+						}))
+					}
+					form="rename-form"
+					type="text"
+				/>
+				<select name="" id="">
+					{getTiers().map((tier, index) => (
+						<option key={index} value={tier.name}>
+							{tier.name}
+						</option>
+					))}
+				</select>
+				<button
+					form="rename-form"
+					className="rounded-md p-1 ml-auto text-slate-50 bg-blue-600 mt-3">
+					Change
+				</button>
+				<form
+					onSubmit={handleSubmit}
+					id="rename-form"
+					action=""></form>
+			</Modal>
+		</>
+	);
+};
+
+type TierProps = {
+	entries: EntryType[];
+	tier: TierData;
+	open?: boolean;
+};
+
+export const Tier = ({ entries, tier, open }: TierProps) => {
 	const [droppableAvailable, setDroppableAvailable] =
 		useState<boolean>(false);
 	const [droppableSrc, setDroppableSrc] = useState<string | null>(null);
-	const { changeEntryTier } = useStore(entryStore);
-	const DetailsBody = () => {
-		if (entries.length < 1) {
-			return <div className="h-10"></div>;
-		}
+	const { changeEntryTier } = useEntryStore();
+	const ulRef = useRef(null);
+	const summaryRef = useRef(null);
+	const detailsRef = useRef(null);
+	const spanRef = useRef(null);
 
+	useEffect(() => {
+		const dataset: { [key: string]: string } = {
+			context: "tier",
+			name: tier.name,
+			color: tier.color,
+		};
+
+		const refs = [ulRef, summaryRef, detailsRef, spanRef];
+
+		applyDatasetToRefs(dataset, refs);
+	});
+
+	const collapse = () => {};
+
+	const expand = () => {};
+
+	const DetailsBody = () => {
 		return (
-			<ul className={`flex`}>
-				{entries.map((entry) => (
-					<li key={entry[0]}>
+			<ul
+				ref={ulRef}
+				style={{
+					borderColor: tier.color,
+				}}
+				data-context="tier"
+				className={`bg-slate-800 border-x-4 border-b-4 grid grid-cols-tier  ${
+					entries.length < 1 ? "h-36" : ""
+				}`}>
+				{entries.map((entry, index) => (
+					<li className="h-36" key={entry.id}>
 						<Entry entry={entry} />
 					</li>
 				))}
@@ -69,7 +163,9 @@ export const Tier = ({ entries, tier }: TierProps) => {
 
 	return (
 		<details
-			open
+			open={open}
+			ref={detailsRef}
+			className="w-full stack"
 			onDragEnter={(e) => {
 				const { dataTransfer } = e;
 				console.log(e.currentTarget);
@@ -93,39 +189,75 @@ export const Tier = ({ entries, tier }: TierProps) => {
 			onDragOver={(e) => {
 				e.preventDefault();
 				console.log("hi from drag over");
-			}}
-			className="w-full stack">
+			}}>
 			<summary
-				id={tier.name}
-				style={{ backgroundColor: tier.color }}
-				className={`tier flex justify-around cursor-pointer text-xl select-none hover:brightness-150 w-full rounded-sm`}>
-				{tier.name}
+				ref={summaryRef}
+				style={{
+					backgroundColor: tier.color,
+				}}
+				data-context="tier"
+				className={`tier flex justify-center text-lg cursor-pointer hover:brightness-150 hover:font-bold w-full`}>
+				<span ref={spanRef}>{tier.name}</span>
 			</summary>
-			<div className="bg-slate-800">
-				<DetailsBody />
-				{droppableAvailable && droppableSrc && (
-					<li>
-						<Entry
-							entry={["temp", droppableSrc, undefined]}
-							ghost
-						/>
-					</li>
-				)}
-			</div>
+			<DetailsBody />
+			{/* {droppableAvailable && droppableSrc && (
+				<li>
+					<Entry
+						entry={["temp", droppableSrc, undefined]}
+						ghost
+					/>
+				</li>
+			)} */}
 		</details>
 	);
 };
 
-export const TierList = () => {
-	const { addTier, tiers, entries } = useStore(entryStore);
+type AddTierFormProps = {
+	setNewTier: (value: React.SetStateAction<TierData>) => void;
+	newTier: TierData;
+};
 
-	const [newTier, setNewTier] = useState<{
-		name: string;
-		color: string;
-	}>({
+const AddTierForm = ({ setNewTier, newTier }: AddTierFormProps) => {
+	return (
+		<div className="flex items-center gap-4 w-full p-3">
+			<input
+				className="rounded-md text-lg indent-2 basis-2/4 py-1"
+				value={newTier.name}
+				onChange={(e) =>
+					setNewTier((prev) => ({
+						...prev,
+						name: e.target.value,
+					}))
+				}
+				form="new-tier"
+			/>
+			<SubmitButton
+				form="new-tier"
+				disabled={newTier.name.length < 1}>
+				Add
+			</SubmitButton>
+			<div className="ml-auto basis-1/4">
+				<ColorSelect
+					color={newTier.color}
+					setColor={(e) =>
+						setNewTier((prev) => ({
+							...prev,
+							color: e.target.value,
+						}))
+					}
+				/>
+			</div>
+		</div>
+	);
+};
+
+export const TierList = () => {
+	const [allowMultiple, setAllowMultiple] = useState<boolean>(true);
+	const [newTier, setNewTier] = useState<TierData>({
 		color: "",
 		name: "",
 	});
+	const { addTier, tiers, entries } = useEntryStore();
 
 	const handleAddTier = (e: FormEvent) => {
 		e.preventDefault();
@@ -133,73 +265,45 @@ export const TierList = () => {
 		setNewTier({ name: "", color: "" });
 	};
 
+	// const toggleAllowMultiple = () => {
+	// 	console.log("set multiple toggle");
+	// 	setAllowMultiple((prev) => !prev);
+	// };
+
 	return (
 		<>
-			<RenameTierModal />
-			<div className="relative stack w-2/4">
-				<div className="flex justify-around w-full p-3">
-					<input
-						className="rounded-md text-lg indent-2"
-						value={newTier.name}
-						onChange={(e) =>
-							setNewTier((prev) => ({
-								...prev,
-								name: e.target.value,
-							}))
-						}
-						type="text"
-						form="tier-form"
-					/>
-					<select
-						className="rounded-md"
-						style={{ backgroundColor: newTier.color }}
-						value={newTier.color}
-						onChange={(e) =>
-							setNewTier((prev) => ({
-								...prev,
-								color: e.target.value,
-							}))
-						}
-						form="tier-form">
-						{Object.keys(flatColors)
-							.slice(3)
-							.map((color, index) => {
-								const colorValue = flatColors[color];
-								return (
-									<option
-										className="text-xs  text-center uppercase hover:font-bold backdrop-invert "
-										style={{
-											backgroundColor: colorValue,
-										}}
-										key={index}
-										value={colorValue}>
-										{color}
-									</option>
-								);
-							})}
-					</select>
-				</div>
+			<EditTierModal />
+			<ChangeTierModal />
+			<div className="stack basis-full gap-4">
+				<AddTierForm newTier={newTier} setNewTier={setNewTier} />
+				<ul className="w-full px-3  overflow-y-auto">
+					{[...tiers].map((tier, index) => {
+						if (!tier) return;
+						const filtered = entries.filter(
+							({ tierName }) => tierName === tier.name
+						);
+						return (
+							<li key={tier.name}>
+								<Tier tier={tier} entries={filtered} />
+							</li>
+						);
+					})}
+				</ul>
 
-				{[...tiers].map((tier, index) => {
-					if (!tier) return;
-					const filtered = entries.filter(
-						([, , curr]) => curr?.name === tier.name
-					);
-					return (
-						<Tier
-							key={tier.name}
-							tier={tier}
-							entries={filtered}
-						/>
-					);
-				})}
-				<button
-					className="bg-blue-300 hover:bg-green-300 rounded-md mt-2"
-					form="tier-form">
-					+
-				</button>
-				<form onSubmit={handleAddTier} id="tier-form"></form>
+				<form onSubmit={handleAddTier} id="new-tier"></form>
 			</div>
 		</>
 	);
 };
+
+// Button group
+
+{
+	/* <div className="button-group flex justify-center gap-2">
+	<SolidButton>Collapse All</SolidButton>
+	<GhostButton>Fold All</GhostButton>
+	<Toggle toggle={toggleAllowMultiple} on={allowMultiple}>
+		Allow Multiple
+	</Toggle>
+</div>; */
+}
