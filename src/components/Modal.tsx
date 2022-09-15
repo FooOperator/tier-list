@@ -1,8 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose } from "@fortawesome/free-solid-svg-icons";
-
-import {
-	FormEvent,
+import React, {
 	LegacyRef,
 	ReactNode,
 	useCallback,
@@ -10,78 +8,126 @@ import {
 	useRef,
 	useState,
 } from "react";
+import useModalsStore, { ModalKey } from "../store/ModalsStore";
+
+const safeDocument = typeof document !== "undefined" ? document : {};
+
+/**
+ * Credits to {@link https://gist.github.com/reecelucas @reecelucas} for this hook.
+ *
+ *
+ * {@link https://gist.github.com/reecelucas/2f510e6b8504008deaaa52732202d2da Thread} it was taken from.
+ *
+ * @returns helpers to enable/disable scroll.
+ */
+const useScrollBlock = () => {
+	const scrollBlocked = useRef();
+	const html = safeDocument.documentElement;
+	const { body } = safeDocument;
+
+	const blockScroll = () => {
+		if (!body || !body.style || scrollBlocked.current) return;
+
+		const scrollBarWidth = window.innerWidth - html.clientWidth;
+		const bodyPaddingRight =
+			parseInt(
+				window
+					.getComputedStyle(body)
+					.getPropertyValue("padding-right")
+			) || 0;
+
+		html.style.position = "relative"; /* [1] */
+		html.style.overflow = "hidden"; /* [2] */
+		body.style.position = "relative"; /* [1] */
+		body.style.overflow = "hidden"; /* [2] */
+		body.style.paddingRight = `${bodyPaddingRight + scrollBarWidth}px`;
+
+		scrollBlocked.current = true;
+	};
+
+	const allowScroll = () => {
+		if (!body || !body.style || !scrollBlocked.current) return;
+
+		html.style.position = "";
+		html.style.overflow = "";
+		body.style.position = "";
+		body.style.overflow = "";
+		body.style.paddingRight = "";
+
+		scrollBlocked.current = false;
+	};
+
+	return [blockScroll, allowScroll];
+};
 
 export interface ModalProps {
 	isOpen: boolean;
 	open: () => void;
 	close: () => void;
+	modalKey: ModalKey;
 	thisRef: LegacyRef<HTMLDialogElement>;
 }
 
-type ModalRefType = LegacyRef<HTMLDialogElement>;
-
-type ModalOpenClose = { close: () => void; open: () => void };
-
-export type ModalsContextProps = {
-	modalsRef: React.MutableRefObject<Map<ModalRefType, ModalOpenClose>>;
-	registerModal: (ref: ModalRefType, openClose: ModalOpenClose) => void;
-};
-
-const useModals = () => {
-	const modalsRef = useRef(new Map<ModalRefType, ModalOpenClose>());
-
-	const registerModal = (
-		ref: ModalRefType,
-		openClose: ModalOpenClose
-	) => {
-		modalsRef.current.set(ref, openClose);
-	};
-
-	return { modalsRef, registerModal };
-};
-
-export const useModal = (): ModalProps => {
+export const useModal = (which: ModalKey): ModalProps => {
+	const modalKey = useRef<ModalKey>(which);
 	const thisRef = useRef<HTMLDialogElement>(null);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const { modalsRef, registerModal } = useModals();
+	const { modalsRef, registerModal, close, open } = useModalsStore();
 
-	const close = () => setIsOpen(false);
+	const [blockScroll, allowScroll] = useScrollBlock();
 
-	const open = () => {
-		for (const modal of modalsRef.current) {
+	const closeMe = () => setIsOpen(false);
+
+	const openMe = () => {
+		for (const modal of modalsRef) {
 			modal[1].close();
 		}
 		setIsOpen(true);
 	};
+
+	useEffect(() => {
+		if (isOpen) blockScroll();
+		else allowScroll();
+	}, [isOpen]);
 
 	const handleMouseDown = useCallback((e: MouseEvent) => {
 		if (
 			thisRef.current &&
 			!thisRef.current.contains(e.target as Node)
 		) {
-			close();
+			closeMe();
 		}
 	}, []);
 
-	const handleKeyDown = (e: KeyboardEvent) => {
+	const handleKeyDown = useCallback((e: KeyboardEvent) => {
 		if (e.key === "Escape") {
-			close();
+			closeMe();
 		}
-	};
+	}, []);
+
+	const handleScroll = useCallback((e: Event) => {
+		e.preventDefault();
+	}, []);
 
 	useEffect(() => {
-		registerModal(thisRef, { open, close });
-		[...modalsRef.current].forEach(console.log);
+		registerModal(modalKey.current, { open: openMe, close: closeMe });
+		[...modalsRef].forEach(console.log);
 
 		document.addEventListener("mousedown", handleMouseDown);
 		document.addEventListener("keydown", handleKeyDown);
 		return () => {
-			document.addEventListener("mousedown", handleMouseDown);
+			document.removeEventListener("mousedown", handleMouseDown);
 			document.removeEventListener("keydown", handleKeyDown);
 		};
 	}, []);
 
-	return { isOpen, open, close, thisRef };
+	return {
+		isOpen,
+		open: openMe,
+		close: closeMe,
+		modalKey: modalKey.current,
+		thisRef,
+	};
 };
 
 export const Modal = ({
