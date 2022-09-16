@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind utilities;
+@tailwind variants;
+
+@layer base {
+	html,
+	body,
+	#root {
+		@apply h-screen;
+	}
+}
+
+@layer utilities {
+	.stack {
+		@apply flex flex-col;
+	}
+
+	.stack-center {
+		@apply stack items-center;
+	}
+
+	.flex-center {
+		@apply flex justify-center;
+	}
+
+	.button-group {
+		@apply flex gap-2;
+	}
+
+	.button {
+		@apply disabled:bg-gray-300 dark:disabled:bg-gray-100 cursor-pointer focus:ring-4 font-medium rounded-lg text-lg px-2 py-0.5 focus:outline-none dark:text-black text-white;
+	}
+
+	.solid-button {
+		@apply button  bg-blue-700 hover:bg-blue-800  focus:ring-blue-300  dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
+	}
+
+	.ghost-button {
+		@apply button  border-black border-2;
+	}
+
+	.submit-button {
+		@apply button bg-green-700 dark:disabled:bg-gray-100 disabled:bg-gray-100 hover:bg-green-800 focus:ring-green-300 dark:bg-green-300 dark:hover:hover:bg-green-200;
+	}
+
+	.toggle {
+		@apply button flex items-center gap-2;
+	}
+
+	.toggle input[type="checkbox"] {
+		@apply hidden;
+	}
+}

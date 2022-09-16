@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/vite.svg"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Vite + React + TS</title>
+    <link
+      rel="stylesheet"
+      href="./src/index.css"
+    >
+    <style>
+      #root {
+        background-color: #030D2C;
+
+      }
+
+      .noscript {
+        height: 100%;
+      }
+
+      .noscript .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+      }
+
+      h1,
+      h2 {
+        color: #FFFAFF;
+      }
+
+      .noscript h1 {
+        font-size: 2.25rem;
+        line-height: 2.5rem;
+        margin-top: 5.4rem;
+      }
+
+      .noscript h2 {
+        margin: 1.4rem 0;
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+      }
+
+      .noscript .links {
+        margin-top: 1.5rem;
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .noscript a {
+        padding: 1rem 1.25rem;
+        text-align: center;
+        border-radius: 2rem;
+        border-width: 2px;
+        color: #DECDF5;
+        border-color: #DECDF5;
+      }
+
+      .noscript a:hover {
+        color: #8237CC;
+        border-color: #8237CC;
+      }
+
+      .noscript a span {
+        font-size: 1.7rem;
+        line-height: 1.9rem;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div id="root">
+      <noscript class="noscript">
+        <div class="container">
+          <h1>
+            This site does <span class="italic">not</span> work
+            without <span class="italic bold">Javascript</span>
+          </h1>
+          <h2>
+            Access the link below that matches your current browser to discover how to activate Javascript.
+          </h2>
+          <div class="links">
+            <a
+              target="_blank"
+              href="https://www.enablejavascript.io/en#chrome"
+            >
+              <img
+                src="https://www.enablejavascript.io/images/chrome.svg"
+                alt="chrome logo"
+              >
+              <span>Chrome</span>
+            </a>
+            <a href="https://www.enablejavascript.io/en#firefox">
+              <img
+                src="https://www.enablejavascript.io/images/firefox.svg"
+                alt="firefox logo"
+              >
+              <span>Firefox</span>
+            </a>
+            <a href="https://www.enablejavascript.io/en#edge">
+              <img
+                src="https://www.enablejavascript.io/images/edge.svg"
+                alt="edge logo"
+              >
+              <span>Edge</span>
+            </a>
+            <a href="https://www.enablejavascript.io/en#opera">
+              <img
+                src="https://www.enablejavascript.io/images/opera.svg"
+                alt="opera logo"
+              >
+              <span>Opera</span>
+            </a>
+          </div>
+        </div>
+      </noscript>
+    </div>
+    <script
+      type="module"
+      src="/src/main.tsx"
+    ></script>
+  </body>
+
+</html>
